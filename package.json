@@ -1,0 +1,10 @@
+{
+  "name": "qalibrate",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Single-command launcher for the QAlibrate backend and frontend.",
+  "scripts": {
+    "dev": "node scripts/dev.js",
+    "start": "node scripts/dev.js"
+  }
+}
