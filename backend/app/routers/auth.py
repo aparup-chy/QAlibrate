@@ -21,7 +21,8 @@ RESET_MESSAGE = "If an account exists for that email, a reset code has been sent
 
 @router.post("/register", response_model=schemas.Token, status_code=status.HTTP_201_CREATED)
 def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
-    existing = db.query(models.User).filter(models.User.email == payload.email).first()
+    email = payload.email.strip().lower()
+    existing = db.query(models.User).filter(func.lower(models.User.email) == email).first()
     if existing:
         raise HTTPException(status_code=400, detail="An account with this email already exists")
 
@@ -37,7 +38,7 @@ def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
             )
             .first()
         )
-        if not invitation or invitation.email.lower() != payload.email.lower():
+        if not invitation or invitation.email.lower() != email:
             raise HTTPException(status_code=400, detail="Invitation is invalid or expired")
     elif settings_row and settings_row.require_invite and db.query(models.User).count() > 0:
         raise HTTPException(status_code=403, detail="An invitation is required to register")
@@ -45,7 +46,7 @@ def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
     is_first_user = db.query(models.User).count() == 0
     user = models.User(
         full_name=payload.full_name,
-        email=payload.email,
+        email=email,
         hashed_password=hash_password(payload.password),
         role=(models.UserRole.admin if is_first_user else invitation.role if invitation else models.UserRole.tester),
     )
@@ -74,7 +75,8 @@ def register(payload: schemas.UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=schemas.Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == form_data.username).first()
+    email = form_data.username.strip().lower()
+    user = db.query(models.User).filter(func.lower(models.User.email) == email).first()
     if not user or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -94,7 +96,8 @@ def forgot_password(
     payload: schemas.ForgotPasswordRequest,
     db: Session = Depends(get_db),
 ):
-    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    email = payload.email.strip().lower()
+    user = db.query(models.User).filter(func.lower(models.User.email) == email).first()
     if not user or not user.is_active:
         return {"message": RESET_MESSAGE}
 
@@ -134,7 +137,8 @@ def forgot_password(
 
 @router.post("/reset-password")
 def reset_password(payload: schemas.ResetPasswordRequest, db: Session = Depends(get_db)):
-    user = db.query(models.User).filter(models.User.email == payload.email).first()
+    email = payload.email.strip().lower()
+    user = db.query(models.User).filter(func.lower(models.User.email) == email).first()
     if not user:
         raise HTTPException(status_code=400, detail="Invalid or expired reset code")
 
