@@ -11,13 +11,13 @@ from .models import UserRole, Priority, RunStatus, ItemStatus
 class UserCreate(BaseModel):
     full_name: str
     email: EmailStr
-    password: str = Field(min_length=6)
+    password: str = Field(min_length=6, max_length=72)
     invite_token: Optional[str] = None
 
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str
+    password: str = Field(max_length=72)
 
 
 class ForgotPasswordRequest(BaseModel):
@@ -27,14 +27,14 @@ class ForgotPasswordRequest(BaseModel):
 class ResetPasswordRequest(BaseModel):
     email: EmailStr
     otp: str = Field(min_length=6, max_length=6, pattern=r"^\d{6}$")
-    new_password: str = Field(min_length=6)
+    new_password: str = Field(min_length=6, max_length=72)
 
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
     email: Optional[EmailStr] = None
     current_password: Optional[str] = None
-    new_password: Optional[str] = Field(default=None, min_length=6)
+    new_password: Optional[str] = Field(default=None, min_length=6, max_length=72)
 
 
 class UserOut(BaseModel):
